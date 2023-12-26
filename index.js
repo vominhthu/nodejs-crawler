@@ -43,7 +43,6 @@ async function crawl(url, country) {
     try {
         const html = await fetchHTML(url);
         const data = extractData(html, country);
-        data[country].status = 'Open';
         const isSendEmail = data[country].status !== STATUS.CLOSED || isTimeToSend();
         if (isSendEmail) {
             mailConfiguration.emailsTo.forEach(function (emailTo) {
