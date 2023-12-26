@@ -43,13 +43,13 @@ async function crawl(url, country) {
     try {
         const html = await fetchHTML(url);
         const data = extractData(html, country);
-        console.log(process.env.TEST_MAIL);
-        const isSendEmail = data[country].status !== STATUS.CLOSED || isTimeToSend() || process.env.TEST_MAIL;
+        const isSendEmail = data[country].status !== STATUS.CLOSED || isTimeToSend();
         if (isSendEmail) {
             mailConfiguration.emailsTo.forEach(function (emailTo) {
                 sendMail(emailTo, mailConfiguration.subject, `${country}: ${data[country].status}, slots: ${data[country].slots}`)
             });
         }
+        console.log(`Country: ${country}, Status: ${data[country].status}, Slots: ${data[country].slots}`)
     } catch (error) {
         console.error(`Failed to crawl "${url}": ${error.message}`);
     }
