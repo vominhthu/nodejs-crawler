@@ -43,7 +43,8 @@ async function crawl(url, country) {
     try {
         const html = await fetchHTML(url);
         const data = extractData(html, country);
-        const isSendEmail = data[country].status !== STATUS.CLOSED || isTimeToSend();
+        // const isSendEmail = data[country].status !== STATUS.CLOSED || isTimeToSend();
+        const isSendEmail = true;
         isSendEmail && sendMail(mailConfiguration.emailTo, mailConfiguration.subject, `${country}: ${data[country].status}, slots: ${data[country].slots}`)
     } catch (error) {
         console.error(`Failed to crawl "${url}": ${error.message}`);
