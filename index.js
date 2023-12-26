@@ -9,7 +9,7 @@ const STATUS = {
 const mailConfiguration = {
     subject: 'Visa 462 Tracking',
     emailFrom: 'thu.vominh22@gmail.com',
-    emailTo: 'thu.vominh23@gmail.com'
+    emailsTo: ['thu.vominh23@gmail.com', 'hochihai1997@gmail.com']
 }
 
 async function fetchHTML(url) {
@@ -43,9 +43,13 @@ async function crawl(url, country) {
     try {
         const html = await fetchHTML(url);
         const data = extractData(html, country);
-        // const isSendEmail = data[country].status !== STATUS.CLOSED || isTimeToSend();
-        const isSendEmail = true;
-        isSendEmail && sendMail(mailConfiguration.emailTo, mailConfiguration.subject, `${country}: ${data[country].status}, slots: ${data[country].slots}`)
+        console.log(process.env.TEST_MAIL);
+        const isSendEmail = data[country].status !== STATUS.CLOSED || isTimeToSend() || process.env.TEST_MAIL;
+        if (isSendEmail) {
+            mailConfiguration.emailsTo.forEach(function (emailTo) {
+                sendMail(emailTo, mailConfiguration.subject, `${country}: ${data[country].status}, slots: ${data[country].slots}`)
+            });
+        }
     } catch (error) {
         console.error(`Failed to crawl "${url}": ${error.message}`);
     }
