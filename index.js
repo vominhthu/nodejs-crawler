@@ -79,11 +79,12 @@ async function sendMail(emailTo, subject, text) {
 }
 
 function isTimeToSend() {
-    const hour  = new Date(new Date().toLocaleString('en-US')).getUTCHours() === 4;
-    const minutes  = new Date(new Date().toLocaleString('en-US')).getUTCMinutes() === 35;
-    return hour && minutes;
+    const hour  = new Date(new Date().toLocaleString('en-US')).getUTCHours();
+    const isHour = hour === 4 || hour === 12;
+    const minutes  = new Date(new Date().toLocaleString('en-US')).getUTCMinutes() === 30;
+    return isHour && minutes;
 }
-cron.schedule("*/1 * * * * ", function () {
+cron.schedule("* * * * * ", function () {
     console.log('====================================');
     console.log('Run time: ', new Date().toUTCString());
     try {
@@ -100,7 +101,7 @@ const express = require('express')
 const app = express()
 const port = 3000
 
-app.get('/', (req, res) => {
+app.get('/healthz', (req, res) => {
   res.send('Hello World!')
 })
 
