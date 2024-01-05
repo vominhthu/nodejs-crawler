@@ -1,5 +1,4 @@
 const axios = require('axios');
-const cron = require("node-cron");
 
 const VIET_NAM = 'Vietnam';
 const STATUS = {
@@ -16,7 +15,6 @@ async function fetchHTML(url) {
     const { data } = await axios.get(url);
     return data;
 }
-
 
 const cheerio = require('cheerio');
 
@@ -43,15 +41,15 @@ async function crawl(url, country) {
     try {
         const html = await fetchHTML(url);
         const data = extractData(html, country);
-        const isSendEmail = data[country].status !== STATUS.CLOSED || isTimeToSend();
+        const isSendEmail = true;
         if (isSendEmail) {
-            mailConfiguration.emailsTo.forEach(function (emailTo) {
-                sendMail(emailTo, mailConfiguration.subject, `${country}: ${data[country].status}, slots: ${data[country].slots}`)
+            mailConfiguration.emailsTo.forEach(async function (emailTo) {
+                await sendMail(emailTo, mailConfiguration.subject, `${country}: ${data[country].status}, slots: ${data[country].slots}`)
             });
         }
-        console.log(`Country: ${country}, Status: ${data[country].status}, Slots: ${data[country].slots}`)
+        return `Country: ${country}, Status: <span style="color:red">${data[country].status}</span>, Slots: ${data[country].slots}`;
     } catch (error) {
-        console.error(`Failed to crawl "${url}": ${error.message}`);
+        return 'Failed: ' + error.message
     }
 }
 async function sendMail(emailTo, subject, text) {
@@ -84,16 +82,6 @@ function isTimeToSend() {
     const minutes  = new Date(new Date().toLocaleString('en-US')).getUTCMinutes() === 30;
     return isHour && minutes;
 }
-cron.schedule("* * * * * ", function () {
-    console.log('====================================');
-    console.log('Run time: ', new Date().toUTCString());
-    try {
-        crawl('https://immi.homeaffairs.gov.au/what-we-do/whm-program/status-of-country-caps', VIET_NAM);
-        console.log('Run successfully...');
-    } catch (error) {
-        console.log('Run failed...', error);
-    }
-});
 
 //file name : index.js
 
@@ -103,7 +91,13 @@ const port = 3000
 
 app.get('/healthz', (req, res) => {
   res.send('Hello World!')
-})
+});
+
+app.get('/run', async (req, res) => {
+    const message = await crawl('https://immi.homeaffairs.gov.au/what-we-do/whm-program/status-of-country-caps', VIET_NAM);
+    res.send(`<b>Running time: ${new Date().toUTCString()}</b>: ${message}`)
+  });
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
