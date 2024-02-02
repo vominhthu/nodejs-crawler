@@ -1,4 +1,12 @@
 const axios = require('axios');
+const nodeCron = require('node-cron');
+const express = require('express');
+const cheerio = require('cheerio');
+
+
+const app = express();
+const port = 3000;
+
 
 const VIET_NAM = 'Vietnam';
 const STATUS = {
@@ -8,7 +16,7 @@ const STATUS = {
 const mailConfiguration = {
     subject: 'Visa 462 Tracking',
     emailFrom: 'thu.vominh22@gmail.com',
-    emailsTo: ['thu.vominh23@gmail.com', 'hochihai1997@gmail.com']
+    emailsTo: ['thu.vominh23@gmail.com']
 }
 
 async function fetchHTML(url) {
@@ -16,7 +24,6 @@ async function fetchHTML(url) {
     return data;
 }
 
-const cheerio = require('cheerio');
 
 function extractData(html, country = VIET_NAM) {
     const $ = cheerio.load(html);
@@ -76,29 +83,22 @@ async function sendMail(emailTo, subject, text) {
     });
 }
 
-function isTimeToSend() {
-    const hour  = new Date(new Date().toLocaleString('en-US')).getUTCHours();
-    const isHour = hour === 4 || hour === 12;
-    const minutes  = new Date(new Date().toLocaleString('en-US')).getUTCMinutes() === 30;
-    return isHour && minutes;
-}
 
-//file name : index.js
-
-const express = require('express')
-const app = express()
-const port = 3000
 
 app.get('/healthz', (req, res) => {
   res.send('Hello World!')
 });
 
-app.get('/run', async (req, res) => {
+
+nodeCron.schedule("*/2 * * * *", async () => {
     const message = await crawl('https://immi.homeaffairs.gov.au/what-we-do/whm-program/status-of-country-caps', VIET_NAM);
-    res.send(`<b>Running time: ${new Date().toUTCString()}</b>: ${message}`)
-  });
+    
+    mailConfiguration.emailsTo.forEach((email) => {
+        sendMail(email, mailConfiguration.subject, message);
+    });
+});
 
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
-})
+});
